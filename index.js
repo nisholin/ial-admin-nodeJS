@@ -65,25 +65,23 @@ app.use(bodyParser.json());
     });
     app.post('/manualentry/manualentrynew',(request, response)=>{
         var empEntryDtata = request.body;
-        var empEntyLength   = empEntryDtata.length;
-        for(i=0;i<empEntyLength;i++) {
-            pool.query("insert into  manual_entry SET ?",empEntryDtata[i],(err,result)=>{
+            pool.query("insert into  manual_entry SET ?",empEntryDtata,(err,result)=>{
                 if(err) throw err;
                 response.end(JSON.stringify(result));
+                console.log("Number of records inserted: " + result.affectedRows);
             });
-            console.log(empEntryDtata);
-        }  
+        console.log(empEntryDtata);
     });
 
     app.put('/manualentry/employeeedit/:id',(request, response)=>{
+        var idValue = request.params.id;
+        console.log(idValue);
         var empEntryDtata  = request.body;
         console.log(empEntryDtata);
-            pool.query("UPDATE manual_entry SET ? WHERE id",empEntryDtata,(err,result)=>{
+            pool.query("UPDATE `manual_entry` SET ? WHERE id = ?",[empEntryDtata,idValue],(err,result)=>{
                 if(err) throw err;
                 response.end(JSON.stringify(result));
-            });
-        console.log(empEntryDtata);
-        
+            });        
     });
 
     app.delete('/manualentry/employeedelete/:id',(request, response)=>{
@@ -104,9 +102,11 @@ app.use(bodyParser.json());
     });
     //update
     app.put('/manualentry/contractor/contedit/:id',(request, response)=>{
+        var contIdValue = request.params.id;
+        console.log(contIdValue);
         var contEntryDtata  = request.body;
         console.log(contEntryDtata);
-            pool.query("UPDATE manual_entry SET ? WHERE id",contEntryDtata,(err,result)=>{
+            pool.query("UPDATE manual_entry SET ? WHERE id = ?",[contEntryDtata,contIdValue],(err,result)=>{
                 if(err) throw err;
                 response.end(JSON.stringify(result));
             });
@@ -122,18 +122,41 @@ app.use(bodyParser.json());
 
 
 //Meeting Request
-app.get('/manualentry/meetingreq/view',(request, response)=>{
-    pool.query('SELECT * from meeting_header',(err,result)=>{
-        if(err) throw err;
-        response.send(result);
+    //read
+    app.get('/manualentry/meetingreq/view',(request, response)=>{
+        pool.query('SELECT * from meeting_header',(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
     });
-});
-app.get('/manualentry/meetingreq/itemview',(request, response)=>{
-    pool.query('SELECT * from item_master where item_id in (1,2,3,4,10,11,12,13,14)',(err,result)=>{
-        if(err) throw err;
-        response.send(result);
+    app.get('/manualentry/meetingreq/itemview',(request, response)=>{
+        pool.query('SELECT * from item_master where item_id in (1,2,3,4,10,11,12,13,14)',(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
     });
-});
+    //save
+    app.post('/manualentry/meetingreq/save',(request, response)=>{
+        var meetingReqDtata = request.body;
+        console.log(meetingReqDtata);
+            pool.query("insert into  meeting_header SET ?",meetingReqDtata,(err,result)=>{
+                if(err) throw err;
+                response.end(JSON.stringify(result));
+            });
+    });
+    //update
+    app.put('/manualentry/meetingreq/edit',(request, response)=>{
+        //var contIdValue = request.params.id;
+        //console.log(contIdValue);
+        var contEntryDtata  = request.body;
+        var id              = contEntryDtata.emp_code;
+        console.log("id===>"+id);
+        console.log(contEntryDtata);
+            pool.query("UPDATE meeting_header SET ? WHERE id = ?",[contEntryDtata,id],(err,result)=>{
+                if(err) throw err;
+                response.end(JSON.stringify(result));
+            });
+    });
 
 
 
