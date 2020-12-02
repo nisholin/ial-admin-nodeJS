@@ -63,22 +63,50 @@ app.use(bodyParser.json());
             response.send(result);
         });
     });
-    app.post('/manualentry/manualentrynew',(request, response)=>{
-        var empEntryDtata = request.body;
-            pool.query("insert into  manual_entry SET ?",empEntryDtata,(err,result)=>{
+    app.get('/manualentry/employee/getsaveditem/:item_id',(request, response)=>{
+        var item_id = request.params.item_id;
+        console.log(item_id);
+        pool.query("SELECT * FROM `item_master` where `item_id` in (?)",[item_id],(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
+    app.post('/manualentry/manualentrynew',(req, res)=>{
+        var empEntryDtata = req.body;
+        //console.log(empEntryDtata);
+        for(i=0;i<=1;i++){
+        var item_id         =  empEntryDtata[0].item_id;
+        var item_count      =  empEntryDtata[0].item_count;
+        var code            =  empEntryDtata[1].code;
+        var canteen_type    =  empEntryDtata[1].canteen_type;
+        var emp_code        =  empEntryDtata[1].emp_code;
+        var date            =  empEntryDtata[1]. date;
+        }
+        //console.log(item_id);
+        //console.log(item_count);
+        //console.log(code);
+            pool.query("Insert into manual_entry (item_id,item_count,code,canteen_type,emp_code,date) values (?,?,?,?,?,?)",[item_id,item_count,code,canteen_type,emp_code,date],(err,result)=>{
                 if(err) throw err;
-                response.end(JSON.stringify(result));
                 console.log("Number of records inserted: " + result.affectedRows);
-            });
-        console.log(empEntryDtata);
+                res.end(JSON.stringify(result));
+            });   
     });
 
     app.put('/manualentry/employeeedit/:id',(request, response)=>{
         var idValue = request.params.id;
-        console.log(idValue);
+        //console.log(idValue);
         var empEntryDtata  = request.body;
-        console.log(empEntryDtata);
-            pool.query("UPDATE `manual_entry` SET ? WHERE id = ?",[empEntryDtata,idValue],(err,result)=>{
+        //console.log(empEntryDtata);
+        for(i=0;i<=1;i++){
+          var item_id       =   empEntryDtata[0].item_id;
+          var item_count    =   empEntryDtata[0].item_count;
+          var code          =   empEntryDtata[1].code;
+          var canteen_type  =   empEntryDtata[1].canteen_type;
+          var category_id   =   empEntryDtata[1].category_id;
+        }
+        //console.log(item_id);
+        //console.log(code);
+            pool.query("UPDATE `manual_entry` SET item_id = ?,item_count = ?,code = ?,canteen_type = ?,category_id = ? WHERE id = ?",[item_id,item_count,code,canteen_type,category_id,idValue],(err,result)=>{
                 if(err) throw err;
                 response.end(JSON.stringify(result));
             });        
@@ -138,11 +166,36 @@ app.use(bodyParser.json());
     //save
     app.post('/manualentry/meetingreq/save',(request, response)=>{
         var meetingReqDtata = request.body;
-        console.log(meetingReqDtata);
-            pool.query("insert into  meeting_header SET ?",meetingReqDtata,(err,result)=>{
+        var meetingLength   = meetingReqDtata.length;
+        //console.log("length--->",meetingLength);
+        var formData         =   meetingReqDtata.slice(-1)[0];
+        var code             =   formData.code;
+        var emp_code         =   formData.emp_code;
+        var department_id    =   formData.department_id;
+        var date             =   formData.date;
+        var no_of_persons    =   formData.no_of_persons;
+        var remarks          =   formData.remarks;
+        var meeting_room     =   formData.meeting_room;
+        //console.log(code);
+        //console.log(emp_code);
+
+        pool.query("insert into  meeting_header (code,emp_code,department_id,date,no_of_persons,remarks,meeting_room) values (?,?,?,?,?,?,?)",[code,emp_code,department_id,date,no_of_persons,remarks,meeting_room],(err,result)=>{
+            if(err) throw err;
+            console.log("Number of records inserted: " + result.affectedRows);
+            response.end(JSON.stringify(result));
+        }); 
+
+       for(j=0;j<meetingLength-1;j++){
+            var item_id     = meetingReqDtata[j].item_id;
+            var quantity    = meetingReqDtata[j].number;
+            //console.log("id-->",item_id);
+            //console.log("qty-->",quantity);
+            pool.query("insert into  meeting_detail (meeting_header_code,item_id,quantity) values (?,?,?)",[code,item_id,quantity],(err,result)=>{
                 if(err) throw err;
+                console.log("Number of records inserted: " + result.affectedRows);
                 response.end(JSON.stringify(result));
             });
+        } 
     });
     //update
     app.put('/manualentry/meetingreq/edit',(request, response)=>{
