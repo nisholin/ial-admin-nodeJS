@@ -22,7 +22,7 @@ app.use(bodyParser.json());
 
     app.put("/api/users/update/:emp_code", (req , res)=>{
         var postData  = req.body;
-        console.log(postData);
+        //console.log(postData);
         pool.query('UPDATE employee_master SET ? WHERE emp_code',postData,(err,result)=>{
             if(err) throw err;
             console.log("row updated");
@@ -30,8 +30,31 @@ app.use(bodyParser.json());
         });
     });
 
-
-
+//Canteen Menu
+    //canteen Time
+    app.get('/canteenmenu/cateentime/view',(request, response)=>{
+        pool.query("select * from canteen",(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
+    app.put("/canteenmenu/cateentime/:id", (request , response)=>{
+        var id = request.params.id;
+        console.log(id);
+        var postData  = request.body;
+        console.log(postData);
+        for(i=0;i<1;i++){
+            var start_time = postData[0].start_time;
+            var end_time   = postData[0].end_time;
+            console.log(start_time);
+            console.log(end_time);
+        }
+        pool.query('UPDATE canteen SET start_time = ?,end_time = ? WHERE id = ?',[start_time,end_time,id],(err,result)=>{
+            if(err) throw err;
+            console.log("Number of records updated: " + result.affectedRows);
+            response.send(result);
+        });
+    });
 
 //Manual Entry
     //Employee crud operation
@@ -66,7 +89,7 @@ app.use(bodyParser.json());
     app.get('/manualentry/employee/getsaveditem/:item_id',(request, response)=>{
         var item_id = request.params.item_id;
         console.log(item_id);
-        pool.query("SELECT * FROM `item_master` where `item_id` in (?)",[item_id],(err,result)=>{
+        pool.query("SELECT * FROM `item_master` where `item_id` in (?)",item_id,(err,result)=>{
             if(err) throw err;
             response.send(result);
         });
@@ -97,17 +120,22 @@ app.use(bodyParser.json());
         //console.log(idValue);
         var empEntryDtata  = request.body;
         //console.log(empEntryDtata);
-        for(i=0;i<=1;i++){
-          var item_id       =   empEntryDtata[0].item_id;
-          var item_count    =   empEntryDtata[0].item_count;
-          var code          =   empEntryDtata[1].code;
-          var canteen_type  =   empEntryDtata[1].canteen_type;
-          var category_id   =   empEntryDtata[1].category_id;
-        }
+        if(empEntryDtata == 0) {
+         console.log("Empty Records");
+        }else {
+            for(i=0;i<=1;i++){
+                var item_id       =   empEntryDtata[0].item_id;
+                var item_count    =   empEntryDtata[0].item_count;
+                var code          =   empEntryDtata[1].code;
+                var canteen_type  =   empEntryDtata[1].canteen_type;
+                var category_id   =   empEntryDtata[1].category_id;
+              }
+        }               
         //console.log(item_id);
         //console.log(code);
             pool.query("UPDATE `manual_entry` SET item_id = ?,item_count = ?,code = ?,canteen_type = ?,category_id = ? WHERE id = ?",[item_id,item_count,code,canteen_type,category_id,idValue],(err,result)=>{
                 if(err) throw err;
+                console.log("Number of records updated: " + result.affectedRows);
                 response.end(JSON.stringify(result));
             });        
     });
@@ -131,13 +159,21 @@ app.use(bodyParser.json());
     //update
     app.put('/manualentry/contractor/contedit/:id',(request, response)=>{
         var contIdValue = request.params.id;
-        console.log(contIdValue);
+        //console.log(contIdValue);
         var contEntryDtata  = request.body;
-        console.log(contEntryDtata);
-            pool.query("UPDATE manual_entry SET ? WHERE id = ?",[contEntryDtata,contIdValue],(err,result)=>{
-                if(err) throw err;
-                response.end(JSON.stringify(result));
-            });
+       // console.log(contEntryDtata);
+        for(i=0;i<=1;i++){
+            var item_id       =   contEntryDtata[0].item_id;
+            var item_count    =   contEntryDtata[0].item_count;
+            var code          =   contEntryDtata[1].code;
+            var canteen_type  =   contEntryDtata[1].canteen_type;
+            var category_id   =   contEntryDtata[1].category_id;
+          }
+          pool.query("UPDATE `manual_entry` SET item_id = ?,item_count = ?,code = ?,canteen_type = ?,category_id = ? WHERE id = ?",[item_id,item_count,code,canteen_type,category_id,contIdValue],(err,result)=>{
+            if(err) throw err;
+            console.log("Number of records updated: " + result.affectedRows);
+            response.end(JSON.stringify(result));
+        }); 
     });
     //delete
     app.delete('/manualentry/contractor/contdelete/:id',(request, response)=>{
@@ -159,6 +195,22 @@ app.use(bodyParser.json());
     });
     app.get('/manualentry/meetingreq/itemview',(request, response)=>{
         pool.query('SELECT * from item_master where item_id in (1,2,3,4,10,11,12,13,14)',(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
+    app.get('/manualentry/meetingreq/editItemView/:itemid',(request, response)=>{
+        var itemId = request.params.itemid;
+        //console.log(itemId);
+        pool.query("SELECT item_name FROM `item_master` where item_id in(select item_id from meeting_detail where meeting_header_code= ?)",[itemId],(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
+    app.get('/manualentry/meetingreq/editItemQuantityView/:itemid',(request, response)=>{
+        var itemId = request.params.itemid;
+        //console.log(itemId);
+        pool.query("SELECT quantity FROM `meeting_detail` where meeting_header_code = ?",[itemId],(err,result)=>{
             if(err) throw err;
             response.send(result);
         });
@@ -199,16 +251,37 @@ app.use(bodyParser.json());
     });
     //update
     app.put('/manualentry/meetingreq/edit',(request, response)=>{
-        //var contIdValue = request.params.id;
-        //console.log(contIdValue);
-        var contEntryDtata  = request.body;
-        var id              = contEntryDtata.emp_code;
-        console.log("id===>"+id);
-        console.log(contEntryDtata);
-            pool.query("UPDATE meeting_header SET ? WHERE id = ?",[contEntryDtata,id],(err,result)=>{
+        var meetingReqDtata = request.body;
+        var meetingLength   = meetingReqDtata.length;
+        //console.log("length--->",meetingLength);
+        var formData         =   meetingReqDtata.slice(-1)[0];
+        var code             =   formData.code;
+        var emp_code         =   formData.emp_code;
+        var department_id    =   formData.department_id;
+        var date             =   formData.date;
+        var no_of_persons    =   formData.no_of_persons;
+        var remarks          =   formData.remarks;
+        //var meeting_room     =   formData.meeting_room;
+        //console.log(code);
+        //console.log(emp_code);
+
+        pool.query("update meeting_header SET department_id = ?,date = ?,no_of_persons = ?,remarks = ? where emp_code = ?",[department_id,date,no_of_persons,remarks,emp_code],(err,result)=>{
+            if(err) throw err;
+            console.log("Number of records Updated: " + result.affectedRows);
+            response.end(JSON.stringify(result));
+        }); 
+
+    for(j=0;j<meetingLength-1;j++){
+            var item_id     = meetingReqDtata[j].item_id;
+            var quantity    = meetingReqDtata[j].number;
+            //console.log("id-->",item_id);
+            //console.log("qty-->",quantity);
+            pool.query("update  meeting_detail SET meeting_header_code = ?,item_id = ?,quantity = ? where meeting_header_code = ?",[code,item_id,quantity,code],(err,result)=>{
                 if(err) throw err;
+                console.log("Number of records Updated: " + result.affectedRows);
                 response.end(JSON.stringify(result));
             });
+        } 
     });
 
 
