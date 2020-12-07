@@ -29,6 +29,16 @@ app.use(bodyParser.json());
             response.send(result);
         });
     });
+   
+//Employee 
+    app.get('/barcode/view/:empcode',(request, response)=>{
+        var empcode = request.params.empcode;
+        //console.log(itemId);
+        pool.query("select * from employee_master where emp_code = ?",[empcode],(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });    
 
 //Canteen Menu
     //canteen Time
@@ -40,14 +50,14 @@ app.use(bodyParser.json());
     });
     app.put("/canteenmenu/cateentime/:id", (request , response)=>{
         var id = request.params.id;
-        console.log(id);
+        //console.log(id);
         var postData  = request.body;
-        console.log(postData);
+        //console.log(postData);
         for(i=0;i<1;i++){
             var start_time = postData[0].start_time;
             var end_time   = postData[0].end_time;
-            console.log(start_time);
-            console.log(end_time);
+            //console.log(start_time);
+            //console.log(end_time);
         }
         pool.query('UPDATE canteen SET start_time = ?,end_time = ? WHERE id = ?',[start_time,end_time,id],(err,result)=>{
             if(err) throw err;
@@ -55,6 +65,33 @@ app.use(bodyParser.json());
             response.send(result);
         });
     });
+    //Weekly Item Config
+    app.get('/canteenmenu/weeklyitemconfig/view/:id',(request, response)=>{
+        var id = request.params.id;
+        if(id == 1)
+        {
+            var table = "weekly_menu_1";
+        }
+        else if(id == 2)
+        {
+            var table = "weekly_menu_2";
+        }
+        else if(id == 3){
+            var table = "weekly_menu_3";
+        }
+        else if (id == 4){
+            var table = "weekly_menu_4";
+        }else {
+            console.log("Id Does Not exsist");
+        }
+
+        
+        pool.query("select * from "+table,(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
+
 
 //Manual Entry
     //Employee crud operation
@@ -88,7 +125,7 @@ app.use(bodyParser.json());
     });
     app.get('/manualentry/employee/getsaveditem/:item_id',(request, response)=>{
         var item_id = request.params.item_id;
-        console.log(item_id);
+        //console.log(item_id);
         pool.query("SELECT * FROM `item_master` where `item_id` in (?)",item_id,(err,result)=>{
             if(err) throw err;
             response.send(result);
@@ -144,7 +181,7 @@ app.use(bodyParser.json());
         var id = request.params.id;
         pool.query("delete from manual_entry where id= ?",id,(err,result)=>{
             if(err) throw err;
-            response.send(result);
+            response.end(JSON.stringify(result));
         });
     });
 
@@ -284,6 +321,16 @@ app.use(bodyParser.json());
         } 
     });
 
+
+    //Barcode
+    app.get('/barcode/view/:itemid',(request, response)=>{
+        var itemId = request.params.itemid;
+        //console.log(itemId);
+        pool.query("select * from employee_master where emp_code = ?",[itemId],(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
 
 
 app.listen(port,()=>{ console.log(`server connected...${port}`); });
