@@ -5,7 +5,7 @@ const port = 4000;
 const pool = require('./data/config');
 
 var bodyParser = require('body-parser');
-const { response } = require('express');
+const { response, request } = require('express');
 
 
 app.use(cors());
@@ -71,22 +71,35 @@ app.use(bodyParser.json());
         if(id == 1)
         {
             var table = "weekly_menu_1";
+            //console.log(table);
         }
         else if(id == 2)
         {
             var table = "weekly_menu_2";
+            //console.log(table);
         }
         else if(id == 3){
             var table = "weekly_menu_3";
+            //console.log(table);
         }
         else if (id == 4){
             var table = "weekly_menu_4";
+            //console.log(table);
         }else {
-            console.log("Id Does Not exsist");
+            //console.log("Id Does Not exsist");
         }
 
-        
         pool.query("select * from "+table,(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+            return (table);
+        });
+    });
+    app.put("/canteenmenu/weeklyitemconfig/update/:id",(request,response)=>{
+        var id      = request.params.id;
+        var data    = request.body;
+        
+        pool.query("update table weekly_menu_1 SET ? where id = ?",[data,id],(err,result)=>{
             if(err) throw err;
             response.send(result);
         });
