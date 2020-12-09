@@ -95,6 +95,17 @@ app.use(bodyParser.json());
             return (table);
         });
     });
+    app.post("/canteenmenu/weeklyitemconfig/excelsave/:id",(request,response)=>{
+        var id = request.params.id;
+        console.log(id);
+        var postData = request.body;
+        console.log(postData);
+
+        pool.query("insert table",(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
     app.put("/canteenmenu/weeklyitemconfig/update/:id",(request,response)=>{
         var id      = request.params.id;
         var data    = request.body;
@@ -335,7 +346,7 @@ app.use(bodyParser.json());
     });
 
 
-    //Barcode
+//Barcode
     app.get('/barcode/view/:itemid',(request, response)=>{
         var itemId = request.params.itemid;
         //console.log(itemId);
@@ -344,7 +355,21 @@ app.use(bodyParser.json());
             response.send(result);
         });
     });
+//REports
+    //Summary
+    app.post('/report/summaryview',(request, response)=>{
+        var postData    = request.body;
+        //console.log(postData);
+        var fromdate    =  postData.from_date;
+        var todate      =  postData.to_date;
+        //console.log(fromdate);
+        //console.log(todate);
 
+        pool.query("(SELECT i.item_id,im.item_name,sum(quanty) as qty,uom,CONVERT(r.company_amount,DECIMAL(10,2)) as company_amount,CONVERT((sum(quanty)*r.company_amount),DECIMAL(10,2))as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and ? between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id!=43 or i.item_id!=44) and reports_show=1 and date(i.date) between ? and ? and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name) union (SELECT i.item_id,im.item_name,sum(no_of_person) as qty,uom,CONVERT(r.company_amount,DECIMAL(10,2)) as  company_amount,CONVERT((sum(no_of_person)*r.company_amount),DECIMAL(10,2)) as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and ? between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id=43 or i.item_id=44) and reports_show=1 and date(i.date) between ? and ? and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or  (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name)",[fromdate,fromdate,todate,fromdate,fromdate,todate],(err,result)=>{
+            if(err) throw err;
+            response.send(result);
+        });
+    });
 
 app.listen(port,()=>{ console.log(`server connected...${port}`); });
 
