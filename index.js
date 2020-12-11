@@ -360,10 +360,10 @@ app.use(bodyParser.json());
     app.post('/report/summaryview',(request, response)=>{
         var postData    = request.body;
         //console.log(postData);
-        var fromdate    =  postData.from_date;
-        var todate      =  postData.to_date;
-        //console.log(fromdate);
-        //console.log(todate);
+        var fromdate    =  postData[0].from_date;
+        var todate      =  postData[0].to_date;
+        console.log(fromdate);
+        console.log(todate);
 
         pool.query("(SELECT i.item_id,im.item_name,sum(quanty) as qty,uom,CONVERT(r.company_amount,DECIMAL(10,2)) as company_amount,CONVERT((sum(quanty)*r.company_amount),DECIMAL(10,2))as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and ? between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id!=43 or i.item_id!=44) and reports_show=1 and date(i.date) between ? and ? and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name) union (SELECT i.item_id,im.item_name,sum(no_of_person) as qty,uom,CONVERT(r.company_amount,DECIMAL(10,2)) as  company_amount,CONVERT((sum(no_of_person)*r.company_amount),DECIMAL(10,2)) as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and ? between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id=43 or i.item_id=44) and reports_show=1 and date(i.date) between ? and ? and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or  (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name)",[fromdate,fromdate,todate,fromdate,fromdate,todate],(err,result)=>{
             if(err) throw err;
