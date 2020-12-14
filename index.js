@@ -149,8 +149,8 @@ app.use(bodyParser.json());
     });
     app.get('/manualentry/employee/getsaveditem/:item_id',(request, response)=>{
         var item_id = request.params.item_id;
-        //console.log(item_id);
-        pool.query("SELECT * FROM `item_master` where `item_id` in (?)",item_id,(err,result)=>{
+        console.log(item_id);
+        pool.query(`SELECT * FROM item_master where item_id in (${item_id})`,item_id,(err,result)=>{
             if(err) throw err;
             response.send(result);
         });
@@ -262,7 +262,7 @@ app.use(bodyParser.json());
     });
     app.get('/manualentry/meetingreq/editItemView/:itemid',(request, response)=>{
         var itemId = request.params.itemid;
-        //console.log(itemId);
+        console.log(itemId);
         pool.query("SELECT item_name FROM `item_master` where item_id in(select item_id from meeting_detail where meeting_header_code= ?)",[itemId],(err,result)=>{
             if(err) throw err;
             response.send(result);
