@@ -357,7 +357,7 @@ app.use(bodyParser.json());
     });
 //REports
     //Summary
-    app.post('/report/summaryview',(request, response)=>{
+   /*  app.post('/report/summaryview',(request, response)=>{
         var postData    = request.body;
         //console.log(postData);
         var fromdate    =  postData[0].from_date;
@@ -375,7 +375,1225 @@ app.use(bodyParser.json());
             if(err) throw err;
             response.send(result);
         });
-    });
+    }); */
+     //summaryview
+
+     app.get('/report/summaryview',(request, response)=>{
+        //var itemId = request.params.itemid;
+        var fromdate='2016-04-04';
+        var todate='2020-12-04';
+        
+        //console.log(itemId);
+        // var x="(SELECT i.item_id,im.item_name,sum(quanty) as qty,CONVERT(r.company_amount,DECIMAL(10,2)) as company_amount,CONVERT((sum(quanty)*r.company_amount),DECIMAL(10,2))as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and '2017-06-04' between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id!=43 or i.item_id!=44) and reports_show=1 and date(i.date) between '2017-06-04' and '2017-08-04' and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name) union (SELECT i.item_id,im.item_name,sum(no_of_person) as qty,CONVERT(r.company_amount,DECIMAL(10,2)) as  company_amount,CONVERT((sum(no_of_person)*r.company_amount),DECIMAL(10,2)) as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and '2017-06-04' between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id=43 or i.item_id=44) and reports_show=1 and date(i.date) between '2017-06-04' and '2017-08-04' and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or  (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name)";
+         
+        pool.query("(SELECT i.item_id as item,im.item_name,sum(quanty) as qty,uom,CONVERT(r.company_amount,DECIMAL(10,2)) as company_amount,CONVERT((sum(quanty)*r.company_amount),DECIMAL(10,2))as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and ? between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id!=43 or i.item_id!=44) and reports_show=1 and date(i.date) between ? and ? and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name) union (SELECT i.item_id,im.item_name,sum(no_of_person) as qty,uom,CONVERT(r.company_amount,DECIMAL(10,2)) as  company_amount,CONVERT((sum(no_of_person)*r.company_amount),DECIMAL(10,2)) as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and ? between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id=43 or i.item_id=44) and reports_show=1 and date(i.date) between ? and ? and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or  (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name)",[fromdate,fromdate,todate,fromdate,fromdate,todate],(err,result)=>{
+            if(err) throw err;
+            //response.send(result);
+            var data=result;  
+            var length=data.length;
+            //console.log(item);
+            //var data1=[];
+            //data1.push(data);
+            //console.log(data1);
+            for(i=0;i<length;i++){
+                var item_id = data[i].item;
+                //console.log(item_id);
+                if(item_id==43 || item_id==44)
+                {
+                    var sum="no_of_person";
+                    
+                }
+                else
+                {
+                    var sum="quanty";
+                
+                } 
+
+            }
+
+                        pool.query(` (SELECT cm.category_name,sum(h.${sum}) as qty  FROM invoice_header h join category_master cm on cm.id=h.category_id WHERE date(h.date) between ? and ? and h.item_id=? and h.category_id<>6 and h.category_id<>14 and h.category_id<>2 group by cm.category_name)
+                        union
+                        (SELECT  case when cc.payable_by='ial' then 'Service Provider' else 'Payable BY SP' end as ttt, sum(h.${sum}) as qty FROM invoice_header h join employee_master m on m.emp_code=h.emp_code
+                        join company_master cc on cc.id=m.company  WHERE date(h.date) between ? and ? and h.item_id=? and h.category_id=2 and cc.payable_by='ial'
+                        group by ttt)`,[fromdate,todate,item_id,fromdate,todate,item_id],(err,result1)=>{
+                            if(err) throw err;
+                            
+                        //response.send(result1); 
+                        var res1=result1;  
+                        var res=result;
+                        var finalresult=[];
+                finalresult.push(res1,res);
+                response.send(finalresult);
+                }); 
+            
+                //console.log(finalresult);
+                
+                });
+
+
+            });
+            //employeeview
+            app.get('/report/employeeview',(request, response)=>{
+                var from_date='2016-04-01';
+                    var to_date='2020-12-09';
+                    var category="1";
+                    var department="1";
+                    var company="all";
+                    
+                    //console.log(itemId);
+                    // var x="(SELECT i.item_id,im.item_name,sum(quanty) as qty,CONVERT(r.company_amount,DECIMAL(10,2)) as company_amount,CONVERT((sum(quanty)*r.company_amount),DECIMAL(10,2))as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and '2017-06-04' between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id!=43 or i.item_id!=44) and reports_show=1 and date(i.date) between '2017-06-04' and '2017-08-04' and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name) union (SELECT i.item_id,im.item_name,sum(no_of_person) as qty,CONVERT(r.company_amount,DECIMAL(10,2)) as  company_amount,CONVERT((sum(no_of_person)*r.company_amount),DECIMAL(10,2)) as total FROM invoice_header i JOIN item_master im ON im.item_id=i.item_id join rate_master r on i.item_id=r.item_id and '2017-06-04' between from_date and to_date JOIN employee_master e ON e.emp_code=i.emp_code LEFT JOIN company_master cm ON cm.id=e.company WHERE (i.item_id=43 or i.item_id=44) and reports_show=1 and date(i.date) between '2017-06-04' and '2017-08-04' and e.category_id<>6 and e.category_id<>14 and (e.category_id in (SELECT id FROM category_master WHERE id<>2) or  (e.category_id=2 and cm.payable_by='ial')) GROUP BY i.item_id,im.item_name)";
+                    if(company=="all" && department=="all")
+            {
+
+                pool.query(`SELECT i.emp_code,e.emp_name,cc.company_name,d.dept_name, sum( if( item_id = 1, quanty, 0 ) ) AS breakfast, 
+                (sum( if( item_id = 1, quanty, 0 ))* (select employee_amount from item_master where item_id=1)) as breakfast_subsidy_amount, (sum( if( item_id = 1, quanty, 0 ))* (select r.company_amount from item_master i join 
+                    rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount, sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+                    (sum( if( item_id = 2, quanty, 0 ))* (select employee_amount from item_master where item_id=2)) as lunch_subsidy_amount, 
+                    (sum( if( item_id = 2, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount, 
+                    sum( if( item_id = 3, quanty, 0 ) ) AS egg, (sum( if( item_id = 3, quanty, 0 ))* (select employee_amount from item_master where item_id=3)) as egg_subsidy_amount, (sum( if( item_id = 3, quanty, 0 ))* 
+                    (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount, sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+                    (sum( if( item_id = 4, quanty, 0 ))* (select employee_amount from item_master where item_id=4)) as nonveg_subsidy_amount, (sum( if( item_id = 4, quanty, 0 ))* (select r.company_amount from item_master i join 
+                    rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount, sum( if( item_id = 6, quanty, 0 ) ) AS dinner, (sum( if( item_id = 6, quanty, 0 ))*
+                    (select employee_amount from item_master where item_id=6)) as dinner_subsidy_amount, (sum( if( item_id = 6, quanty, 0 ))* (select r.company_amount from item_master i 
+                    join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount, sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+                        (sum( if( item_id = 7, quanty, 0 ))* (select employee_amount from item_master where item_id=7)) as supper_subsidy_amount, (sum( if( item_id = 7, quanty, 0 ))* 
+                        (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount, 
+                        sum( if( item_id = 8, quanty, 0 ) ) AS fruits, (sum( if( item_id = 8, quanty, 0 ))* (select employee_amount from item_master where item_id=8)) as fruits_subsidy_amount, 
+                        (sum( if( item_id = 8, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount, 
+                        sum( if( item_id = 10, quanty, 0 ) ) AS tea, (sum( if( item_id = 10, quanty, 0 ))* (select employee_amount from item_master where item_id=10)) as tea_subsidy_amount,
+                        (sum( if( item_id = 10, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount, 
+                        sum( if( item_id = 11, quanty, 0 ) ) AS coffee, (sum( if( item_id = 11, quanty, 0 ))* (select employee_amount from item_master where item_id=11)) as coffee_subsidy_amount, 
+                        (sum( if( item_id = 11, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount, 
+                        sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits, (sum( if( item_id = 12, quanty, 0 ))* (select employee_amount from item_master where item_id=12)) as biscuits_subsidy_amount,
+                        (sum( if( item_id = 12, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+                        sum( if( item_id = 13, quanty, 0 ) ) AS snacks, (sum( if( item_id = 13, quanty, 0 ))* (select employee_amount from item_master where item_id=13)) as snacks_subsidy_amount, 
+                        (sum( if( item_id = 13, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+                        sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks, (sum( if( item_id = 14, quanty, 0 ))* (select employee_amount from item_master where item_id=14)) as cooldrinks_subsidy_amount, 
+                        (sum( if( item_id = 14, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+                            sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast, (sum( if( item_id = 15, quanty, 0 ))* (select employee_amount from item_master where item_id=15)) as extra_breakfast_subsidy_amount, 
+                            (sum( if( item_id = 15, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+                            sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk, (sum( if( item_id = 35, quanty, 0 ))* (select employee_amount from item_master where item_id=35)) as buttermilk_subsidy_amount, 
+                            (sum( if( item_id = 35, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+                            sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani, (sum( if( item_id = 45, quanty, 0 ))* (select employee_amount from item_master where item_id=45)) as mutton_briyani_subsidy_amount, 
+                            (sum( if( item_id = 45, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+                            sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani, (sum( if( item_id = 46, quanty, 0 ))* (select employee_amount from item_master where item_id=46)) as chicken_briyani_subsidy_amount, 
+                            (sum( if( item_id = 46, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) 
+                            as chicken_briyani_sp_amount FROM invoice_header i JOIN employee_master e ON e.emp_code=i.emp_code JOIN department d ON d.id=e.department join company_master cc on cc.id=e.company WHERE
+                (date(i.date) between ? and ?) AND
+                    e.category_id=? and i.coupon_no not like '%MET%'
+                GROUP BY 
+                emp_code
+                ORDER BY
+                    emp_code,d.dept_name`,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,department],(err,result)=>{
+                    if(err) throw err;
+                    response.send(result);
+
+                }); 
+
+            }
+
+            else 
+            {
+
+                pool.query(`SELECT i.emp_code,e.emp_name,cc.company_name,d.dept_name, sum( if( item_id = 1, quanty, 0 ) ) AS breakfast, 
+                (sum( if( item_id = 1, quanty, 0 ))* (select employee_amount from item_master where item_id=1)) as breakfast_subsidy_amount, (sum( if( item_id = 1, quanty, 0 ))* (select r.company_amount from item_master i join 
+                    rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount, sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+                    (sum( if( item_id = 2, quanty, 0 ))* (select employee_amount from item_master where item_id=2)) as lunch_subsidy_amount, 
+                    (sum( if( item_id = 2, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount, 
+                    sum( if( item_id = 3, quanty, 0 ) ) AS egg, (sum( if( item_id = 3, quanty, 0 ))* (select employee_amount from item_master where item_id=3)) as egg_subsidy_amount, (sum( if( item_id = 3, quanty, 0 ))* 
+                    (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount, sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+                    (sum( if( item_id = 4, quanty, 0 ))* (select employee_amount from item_master where item_id=4)) as nonveg_subsidy_amount, (sum( if( item_id = 4, quanty, 0 ))* (select r.company_amount from item_master i join 
+                    rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount, sum( if( item_id = 6, quanty, 0 ) ) AS dinner, (sum( if( item_id = 6, quanty, 0 ))*
+                    (select employee_amount from item_master where item_id=6)) as dinner_subsidy_amount, (sum( if( item_id = 6, quanty, 0 ))* (select r.company_amount from item_master i 
+                    join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount, sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+                        (sum( if( item_id = 7, quanty, 0 ))* (select employee_amount from item_master where item_id=7)) as supper_subsidy_amount, (sum( if( item_id = 7, quanty, 0 ))* 
+                        (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount, 
+                        sum( if( item_id = 8, quanty, 0 ) ) AS fruits, (sum( if( item_id = 8, quanty, 0 ))* (select employee_amount from item_master where item_id=8)) as fruits_subsidy_amount, 
+                        (sum( if( item_id = 8, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount, 
+                        sum( if( item_id = 10, quanty, 0 ) ) AS tea, (sum( if( item_id = 10, quanty, 0 ))* (select employee_amount from item_master where item_id=10)) as tea_subsidy_amount,
+                        (sum( if( item_id = 10, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount, 
+                        sum( if( item_id = 11, quanty, 0 ) ) AS coffee, (sum( if( item_id = 11, quanty, 0 ))* (select employee_amount from item_master where item_id=11)) as coffee_subsidy_amount, 
+                        (sum( if( item_id = 11, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount, 
+                        sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits, (sum( if( item_id = 12, quanty, 0 ))* (select employee_amount from item_master where item_id=12)) as biscuits_subsidy_amount,
+                        (sum( if( item_id = 12, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+                        sum( if( item_id = 13, quanty, 0 ) ) AS snacks, (sum( if( item_id = 13, quanty, 0 ))* (select employee_amount from item_master where item_id=13)) as snacks_subsidy_amount, 
+                        (sum( if( item_id = 13, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+                        sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks, (sum( if( item_id = 14, quanty, 0 ))* (select employee_amount from item_master where item_id=14)) as cooldrinks_subsidy_amount, 
+                        (sum( if( item_id = 14, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+                            sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast, (sum( if( item_id = 15, quanty, 0 ))* (select employee_amount from item_master where item_id=15)) as extra_breakfast_subsidy_amount, 
+                            (sum( if( item_id = 15, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+                            sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk, (sum( if( item_id = 35, quanty, 0 ))* (select employee_amount from item_master where item_id=35)) as buttermilk_subsidy_amount, 
+                            (sum( if( item_id = 35, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+                            sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani, (sum( if( item_id = 45, quanty, 0 ))* (select employee_amount from item_master where item_id=45)) as mutton_briyani_subsidy_amount, 
+                            (sum( if( item_id = 45, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+                            sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani, (sum( if( item_id = 46, quanty, 0 ))* (select employee_amount from item_master where item_id=46)) as chicken_briyani_subsidy_amount, 
+                            (sum( if( item_id = 46, quanty, 0 ))* (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) 
+                            as chicken_briyani_sp_amount FROM invoice_header i JOIN employee_master e ON e.emp_code=i.emp_code JOIN department d ON d.id=e.department join company_master cc on cc.id=e.company WHERE
+                (date(i.date) between ? and ?) AND
+                    e.category_id=? and(e.department=? or e.company=?) and i.coupon_no not like '%MET%'
+                GROUP BY 
+                emp_code
+                ORDER BY
+                    emp_code,d.dept_name`,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,department,company],(err,result)=>{
+                    if(err) throw err;
+                    response.send(result);
+
+                }); 
+
+            }
+            });
+
+            //serviceproviderview
+
+            app.get('/report/serviceproviderview',(request, response)=>{
+                var from_date='2019-04-01';
+                    var to_date='2020-12-09';
+                    var category="1";
+                    var department="1";
+                    var company="1";
+                if(company=="all" && department=="all")
+                {
+                    console.log("echo");
+                    pool.query(`SELECT 
+            i.emp_code,e.emp_name,cc.company_name,d.dept_name, 
+            sum( if( item_id = 1, quanty, 0 ) ) AS breakfast,
+            (sum( if( item_id = 1, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=1)) as breakfast_subsidy_amount,
+            (sum( if( item_id = 1, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+            sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+            (sum( if( item_id = 2, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=2)) as lunch_subsidy_amount,
+            (sum( if( item_id = 2, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+            sum( if( item_id = 3, quanty, 0 ) ) AS egg,
+            (sum( if( item_id = 3, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=3)) as egg_subsidy_amount,
+            (sum( if( item_id = 3, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+            sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+            (sum( if( item_id = 4, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=4)) as nonveg_subsidy_amount,
+            (sum( if( item_id = 4, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+            sum( if( item_id = 6, quanty, 0 ) ) AS dinner,
+            (sum( if( item_id = 6, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=6)) as dinner_subsidy_amount,
+            (sum( if( item_id = 6, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+            sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+            (sum( if( item_id = 7, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=7)) as supper_subsidy_amount,
+            (sum( if( item_id = 7, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+            sum( if( item_id = 8, quanty, 0 ) ) AS fruits,
+            (sum( if( item_id = 8, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=8)) as fruits_subsidy_amount,
+            (sum( if( item_id = 8, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+            sum( if( item_id = 10, quanty, 0 ) ) AS tea,
+            (sum( if( item_id = 10, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=10)) as tea_subsidy_amount,
+            (sum( if( item_id = 10, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+            sum( if( item_id = 11, quanty, 0 ) ) AS coffee,
+            (sum( if( item_id = 11, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=11)) as coffee_subsidy_amount,
+            (sum( if( item_id = 11, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+            sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits,
+            (sum( if( item_id = 12, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=12)) as biscuits_subsidy_amount,
+            (sum( if( item_id = 12, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+            sum( if( item_id = 13, quanty, 0 ) ) AS snacks,
+            (sum( if( item_id = 13, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=13)) as snacks_subsidy_amount,
+            (sum( if( item_id = 13, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+            sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks,
+            (sum( if( item_id = 14, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=14)) as cooldrinks_subsidy_amount,
+            (sum( if( item_id = 14, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+            sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+            (sum( if( item_id = 15, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=15)) as extra_breakfast_subsidy_amount,
+            (sum( if( item_id = 15, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+            sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk,
+            (sum( if( item_id = 35, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=35)) as buttermilk_subsidy_amount,
+            (sum( if( item_id = 35, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+            sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+            (sum( if( item_id = 45, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=45)) as mutton_briyani_subsidy_amount,
+            (sum( if( item_id = 45, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+            sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+            (sum( if( item_id = 46, quanty, 0 ))*
+            (select employee_amount from item_master where item_id=46)) as chicken_briyani_subsidy_amount,
+            (sum( if( item_id = 46, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount,
+            cc.payable_by   
+            FROM 
+            invoice_header i
+            JOIN
+            employee_master e
+            ON
+            e.emp_code=i.emp_code
+            JOIN department d
+            ON
+            d.id=e.department
+            join company_master cc
+            on
+            cc.id=e.company
+            WHERE
+            (date(i.date) between ? and ?) AND
+            e.category_id=? 
+            GROUP BY 
+            emp_code
+            ORDER BY
+            emp_code,d.dept_name`,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category],(err,result)=>{
+                        if(err) throw err;
+                            response.send(result);
+                        });
+                }
+            else if(company!="all" && department=="all")
+            {
+                console.log("echo1");
+                pool.query(`SELECT 
+                i.emp_code,e.emp_name,cc.company_name,d.dept_name, 
+                sum( if( item_id = 1, quanty, 0 ) ) AS breakfast,
+                (sum( if( item_id = 1, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=1)) as breakfast_subsidy_amount,
+                (sum( if( item_id = 1, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+                sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+                (sum( if( item_id = 2, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=2)) as lunch_subsidy_amount,
+                (sum( if( item_id = 2, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+                sum( if( item_id = 3, quanty, 0 ) ) AS egg,
+                (sum( if( item_id = 3, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=3)) as egg_subsidy_amount,
+                (sum( if( item_id = 3, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+                sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+                (sum( if( item_id = 4, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=4)) as nonveg_subsidy_amount,
+                (sum( if( item_id = 4, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+                sum( if( item_id = 6, quanty, 0 ) ) AS dinner,
+                (sum( if( item_id = 6, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=6)) as dinner_subsidy_amount,
+                (sum( if( item_id = 6, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+                sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+                (sum( if( item_id = 7, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=7)) as supper_subsidy_amount,
+                (sum( if( item_id = 7, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+                sum( if( item_id = 8, quanty, 0 ) ) AS fruits,
+                (sum( if( item_id = 8, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=8)) as fruits_subsidy_amount,
+                (sum( if( item_id = 8, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+                sum( if( item_id = 10, quanty, 0 ) ) AS tea,
+                (sum( if( item_id = 10, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=10)) as tea_subsidy_amount,
+                (sum( if( item_id = 10, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+                sum( if( item_id = 11, quanty, 0 ) ) AS coffee,
+                (sum( if( item_id = 11, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=11)) as coffee_subsidy_amount,
+                (sum( if( item_id = 11, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+                sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits,
+                (sum( if( item_id = 12, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=12)) as biscuits_subsidy_amount,
+                (sum( if( item_id = 12, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+                sum( if( item_id = 13, quanty, 0 ) ) AS snacks,
+                (sum( if( item_id = 13, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=13)) as snacks_subsidy_amount,
+                (sum( if( item_id = 13, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+                sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks,
+                (sum( if( item_id = 14, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=14)) as cooldrinks_subsidy_amount,
+                (sum( if( item_id = 14, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+                sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+                (sum( if( item_id = 15, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=15)) as extra_breakfast_subsidy_amount,
+                (sum( if( item_id = 15, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+                sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk,
+                (sum( if( item_id = 35, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=35)) as buttermilk_subsidy_amount,
+                (sum( if( item_id = 35, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+                sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+                (sum( if( item_id = 45, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=45)) as mutton_briyani_subsidy_amount,
+                (sum( if( item_id = 45, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+                sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+                (sum( if( item_id = 46, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=46)) as chicken_briyani_subsidy_amount,
+                (sum( if( item_id = 46, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount,
+                cc.payable_by   
+                FROM 
+                invoice_header i
+                JOIN
+                employee_master e
+                ON
+                e.emp_code=i.emp_code
+                JOIN department d
+                ON
+                d.id=e.department
+                join company_master cc
+                on
+                cc.id=e.company
+                WHERE
+                (date(i.date) between ? and ?) AND
+                e.category_id=?  and (e.department=? or e.company=?)
+                GROUP BY 
+                emp_code
+                ORDER BY
+                emp_code,d.dept_name`,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,department,company],(err,result)=>{
+                            if(err) throw err;
+                                response.send(result);
+                            });
+
+
+            }
+            else if(company=="all" && department!="all")
+            {
+                console.log("echo2");
+                pool.query(`SELECT 
+                i.emp_code,e.emp_name,cc.company_name,d.dept_name, 
+                sum( if( item_id = 1, quanty, 0 ) ) AS breakfast,
+                (sum( if( item_id = 1, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=1)) as breakfast_subsidy_amount,
+                (sum( if( item_id = 1, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+                sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+                (sum( if( item_id = 2, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=2)) as lunch_subsidy_amount,
+                (sum( if( item_id = 2, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+                sum( if( item_id = 3, quanty, 0 ) ) AS egg,
+                (sum( if( item_id = 3, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=3)) as egg_subsidy_amount,
+                (sum( if( item_id = 3, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+                sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+                (sum( if( item_id = 4, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=4)) as nonveg_subsidy_amount,
+                (sum( if( item_id = 4, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+                sum( if( item_id = 6, quanty, 0 ) ) AS dinner,
+                (sum( if( item_id = 6, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=6)) as dinner_subsidy_amount,
+                (sum( if( item_id = 6, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+                sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+                (sum( if( item_id = 7, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=7)) as supper_subsidy_amount,
+                (sum( if( item_id = 7, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+                sum( if( item_id = 8, quanty, 0 ) ) AS fruits,
+                (sum( if( item_id = 8, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=8)) as fruits_subsidy_amount,
+                (sum( if( item_id = 8, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+                sum( if( item_id = 10, quanty, 0 ) ) AS tea,
+                (sum( if( item_id = 10, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=10)) as tea_subsidy_amount,
+                (sum( if( item_id = 10, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+                sum( if( item_id = 11, quanty, 0 ) ) AS coffee,
+                (sum( if( item_id = 11, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=11)) as coffee_subsidy_amount,
+                (sum( if( item_id = 11, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+                sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits,
+                (sum( if( item_id = 12, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=12)) as biscuits_subsidy_amount,
+                (sum( if( item_id = 12, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+                sum( if( item_id = 13, quanty, 0 ) ) AS snacks,
+                (sum( if( item_id = 13, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=13)) as snacks_subsidy_amount,
+                (sum( if( item_id = 13, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+                sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks,
+                (sum( if( item_id = 14, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=14)) as cooldrinks_subsidy_amount,
+                (sum( if( item_id = 14, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+                sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+                (sum( if( item_id = 15, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=15)) as extra_breakfast_subsidy_amount,
+                (sum( if( item_id = 15, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+                sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk,
+                (sum( if( item_id = 35, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=35)) as buttermilk_subsidy_amount,
+                (sum( if( item_id = 35, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+                sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+                (sum( if( item_id = 45, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=45)) as mutton_briyani_subsidy_amount,
+                (sum( if( item_id = 45, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+                sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+                (sum( if( item_id = 46, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=46)) as chicken_briyani_subsidy_amount,
+                (sum( if( item_id = 46, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount,
+                cc.payable_by   
+                FROM 
+                invoice_header i
+                JOIN
+                employee_master e
+                ON
+                e.emp_code=i.emp_code
+                JOIN department d
+                ON
+                d.id=e.department
+                join company_master cc
+                on
+                cc.id=e.company
+                WHERE
+                (date(i.date) between ? and ?) AND
+                e.category_id=?  and (e.department=?)
+                GROUP BY 
+                emp_code
+                ORDER BY
+                emp_code,d.dept_name`,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,department],(err,result)=>{
+                            if(err) throw err;
+                                response.send(result);
+                            });
+            }
+            else if(company!="all" && department!="all")
+            {
+                console.log("echo3");
+                pool.query(`SELECT 
+                i.emp_code,e.emp_name,cc.company_name,d.dept_name, 
+                sum( if( item_id = 1, quanty, 0 ) ) AS breakfast,
+                (sum( if( item_id = 1, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=1)) as breakfast_subsidy_amount,
+                (sum( if( item_id = 1, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+                sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+                (sum( if( item_id = 2, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=2)) as lunch_subsidy_amount,
+                (sum( if( item_id = 2, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+                sum( if( item_id = 3, quanty, 0 ) ) AS egg,
+                (sum( if( item_id = 3, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=3)) as egg_subsidy_amount,
+                (sum( if( item_id = 3, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+                sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+                (sum( if( item_id = 4, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=4)) as nonveg_subsidy_amount,
+                (sum( if( item_id = 4, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+                sum( if( item_id = 6, quanty, 0 ) ) AS dinner,
+                (sum( if( item_id = 6, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=6)) as dinner_subsidy_amount,
+                (sum( if( item_id = 6, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+                sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+                (sum( if( item_id = 7, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=7)) as supper_subsidy_amount,
+                (sum( if( item_id = 7, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+                sum( if( item_id = 8, quanty, 0 ) ) AS fruits,
+                (sum( if( item_id = 8, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=8)) as fruits_subsidy_amount,
+                (sum( if( item_id = 8, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+                sum( if( item_id = 10, quanty, 0 ) ) AS tea,
+                (sum( if( item_id = 10, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=10)) as tea_subsidy_amount,
+                (sum( if( item_id = 10, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+                sum( if( item_id = 11, quanty, 0 ) ) AS coffee,
+                (sum( if( item_id = 11, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=11)) as coffee_subsidy_amount,
+                (sum( if( item_id = 11, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+                sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits,
+                (sum( if( item_id = 12, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=12)) as biscuits_subsidy_amount,
+                (sum( if( item_id = 12, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+                sum( if( item_id = 13, quanty, 0 ) ) AS snacks,
+                (sum( if( item_id = 13, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=13)) as snacks_subsidy_amount,
+                (sum( if( item_id = 13, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+                sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks,
+                (sum( if( item_id = 14, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=14)) as cooldrinks_subsidy_amount,
+                (sum( if( item_id = 14, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+                sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+                (sum( if( item_id = 15, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=15)) as extra_breakfast_subsidy_amount,
+                (sum( if( item_id = 15, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+                sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk,
+                (sum( if( item_id = 35, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=35)) as buttermilk_subsidy_amount,
+                (sum( if( item_id = 35, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+                sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+                (sum( if( item_id = 45, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=45)) as mutton_briyani_subsidy_amount,
+                (sum( if( item_id = 45, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+                sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+                (sum( if( item_id = 46, quanty, 0 ))*
+                (select employee_amount from item_master where item_id=46)) as chicken_briyani_subsidy_amount,
+                (sum( if( item_id = 46, quanty, 0 ))*
+                (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount,
+                cc.payable_by   
+                FROM 
+                invoice_header i
+                JOIN
+                employee_master e
+                ON
+                e.emp_code=i.emp_code
+                JOIN department d
+                ON
+                d.id=e.department
+                join company_master cc
+                on
+                cc.id=e.company
+                WHERE
+                (date(i.date) between ? and ?) AND
+                e.category_id=?  and (e.department=? or e.company=?)
+                GROUP BY 
+                emp_code
+                ORDER BY
+                emp_code,d.dept_name`,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,department,company],(err,result)=>{
+                            if(err) throw err;
+                                response.send(result);
+                            });
+
+            }
+
+
+            });
+            // guestview
+            app.get('/report/guestview',(request, response)=>{
+                var from_date='2019-04-01';
+                var to_date='2020-12-09';
+                var category="1";
+                var department="1";
+                var company="1";
+                if(department=="all")
+                {
+                console.log("echo");
+                pool.query(`  
+                                                                            
+                (SELECT 
+            date(i.date),i.emp_code,g.emp_name,g.company_name,d.dept_name, 
+            sum( if( item_id = 1, quanty, 0 ) ) AS breakfast,
+
+            (sum( if( item_id = 1, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+
+            sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+
+            (sum( if( item_id = 2, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+
+            sum( if( item_id = 3, quanty, 0 ) ) AS egg,
+
+            (sum( if( item_id = 3, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+
+            sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+
+            (sum( if( item_id = 4, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+
+
+            sum( if( item_id = 6, quanty, 0 ) ) AS dinner,
+
+            (sum( if( item_id = 6, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+
+            sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+
+            (sum( if( item_id = 7, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+
+            sum( if( item_id = 8, quanty, 0 ) ) AS fruits,
+
+            (sum( if( item_id = 8, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+
+            sum( if( item_id = 10, quanty, 0 ) ) AS tea,
+
+            (sum( if( item_id = 10, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+
+            sum( if( item_id = 11, quanty, 0 ) ) AS coffee,
+
+
+            (sum( if( item_id = 11, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+
+            sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits,
+
+            (sum( if( item_id = 12, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+
+
+
+
+            sum( if( item_id = 13, quanty, 0 ) ) AS snacks,
+
+            (sum( if( item_id = 13, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+
+            sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks,
+
+            (sum( if( item_id = 14, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+
+            sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+
+            (sum( if( item_id = 15, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+
+            sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk,
+
+            (sum( if( item_id = 35, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+
+            sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+
+            (sum( if( item_id = 45, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+
+            sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+
+            (sum( if( item_id = 46, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount
+
+            FROM 
+            invoice_header i
+            JOIN
+            guest g
+            ON
+            g.id=i.guest_id
+            JOIN department d
+            ON
+            d.id=g.dept_id
+
+            WHERE
+            (date(i.date) between ? and ?) AND
+            i.category_id=?
+            GROUP BY 
+            i.guest_id
+            ORDER BY
+            emp_code,d.dept_name)
+            union
+            (SELECT 
+            date(i.date),i.emp_code,e.emp_name,g.company,d.dept_name, 
+            sum( if(i.item_id = 1, quanty, 0 ) ) AS breakfast,
+
+            (sum( if(i.item_id = 1, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+
+            sum( if(i.item_id = 2, quanty, 0 ) ) AS lunch,
+
+            (sum( if(i.item_id = 2, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+
+            sum( if(i.item_id = 3, quanty, 0 ) ) AS egg,
+
+            (sum( if(i.item_id = 3, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+
+            sum( if(i.item_id = 4, quanty, 0 ) ) AS nonveg,
+
+            (sum( if(i.item_id = 4, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+
+
+            sum( if(i.item_id = 6, quanty, 0 ) ) AS dinner,
+
+            (sum( if(i.item_id = 6, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+
+            sum( if(i.item_id = 7, quanty, 0 ) ) AS supper,
+
+            (sum( if(i.item_id = 7, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+
+            sum( if(i.item_id = 8, quanty, 0 ) ) AS fruits,
+
+            (sum( if(i.item_id = 8, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+
+            sum( if(i.item_id = 10, quanty, 0 ) ) AS tea,
+
+            (sum( if(i.item_id = 10, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+
+            sum( if(i.item_id = 11, quanty, 0 ) ) AS coffee,
+
+
+            (sum( if(i.item_id = 11, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+
+            sum( if(i.item_id = 12, quanty, 0 ) ) AS Biscuits,
+
+            (sum( if(i.item_id = 12, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+
+
+
+
+            sum( if(i.item_id = 13, quanty, 0 ) ) AS snacks,
+
+            (sum( if(i.item_id = 13, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+
+            sum( if(i.item_id = 14, quanty, 0 ) ) AS cooldrinks,
+
+            (sum( if(i.item_id = 14, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+
+            sum( if(i.item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+
+            (sum( if(i.item_id = 15, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+
+            sum( if(i.item_id = 35, quanty, 0 ) ) AS buttermilk,
+
+            (sum( if(i.item_id = 35, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+
+            sum( if(i.item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+
+            (sum( if(i.item_id = 45, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+
+            sum( if(i.item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+
+            (sum( if(i.item_id = 46, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount
+
+            FROM 
+            invoice_header i
+            JOIN
+            guest_manual_entry g
+            ON
+            g.id=i.guest_id
+            join employee_master e on e.emp_code=i.emp_code
+            JOIN department d
+            ON
+            d.id=e.department
+
+            WHERE
+            (date(i.date) between ? and ?) AND
+            i.category_id=?
+            GROUP BY 
+            i.guest_id
+            ORDER BY
+            emp_code,d.dept_name)
+            `,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category],(err,result)=>{
+                    if(err) throw err;
+                    response.send(result);
+                });
+
+            }
+            else if(department!="all")
+            {
+                console.log("echo1");
+                pool.query(`  
+                                                                            
+                (SELECT 
+            date(i.date),i.emp_code,g.emp_name,g.company_name,d.dept_name, 
+            sum( if( item_id = 1, quanty, 0 ) ) AS breakfast,
+
+            (sum( if( item_id = 1, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+
+            sum( if( item_id = 2, quanty, 0 ) ) AS lunch,
+
+            (sum( if( item_id = 2, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+
+            sum( if( item_id = 3, quanty, 0 ) ) AS egg,
+
+            (sum( if( item_id = 3, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+
+            sum( if( item_id = 4, quanty, 0 ) ) AS nonveg,
+
+            (sum( if( item_id = 4, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+
+
+            sum( if( item_id = 6, quanty, 0 ) ) AS dinner,
+
+            (sum( if( item_id = 6, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+
+            sum( if( item_id = 7, quanty, 0 ) ) AS supper,
+
+            (sum( if( item_id = 7, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+
+            sum( if( item_id = 8, quanty, 0 ) ) AS fruits,
+
+            (sum( if( item_id = 8, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+
+            sum( if( item_id = 10, quanty, 0 ) ) AS tea,
+
+            (sum( if( item_id = 10, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+
+            sum( if( item_id = 11, quanty, 0 ) ) AS coffee,
+
+
+            (sum( if( item_id = 11, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+
+            sum( if( item_id = 12, quanty, 0 ) ) AS Biscuits,
+
+            (sum( if( item_id = 12, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+
+
+
+
+            sum( if( item_id = 13, quanty, 0 ) ) AS snacks,
+
+            (sum( if( item_id = 13, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+
+            sum( if( item_id = 14, quanty, 0 ) ) AS cooldrinks,
+
+            (sum( if( item_id = 14, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+
+            sum( if( item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+
+            (sum( if( item_id = 15, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+
+            sum( if( item_id = 35, quanty, 0 ) ) AS buttermilk,
+
+            (sum( if( item_id = 35, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+
+            sum( if( item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+
+            (sum( if( item_id = 45, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+
+            sum( if( item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+
+            (sum( if( item_id = 46, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount
+
+            FROM 
+            invoice_header i
+            JOIN
+            guest g
+            ON
+            g.id=i.guest_id
+            JOIN department d
+            ON
+            d.id=g.dept_id
+
+            WHERE
+            (date(i.date) between ? and ?) AND
+            i.category_id=?
+            GROUP BY 
+            i.guest_id
+            ORDER BY
+            emp_code,d.dept_name)
+            union
+            (SELECT 
+            date(i.date),i.emp_code,e.emp_name,g.company,d.dept_name, 
+            sum( if(i.item_id = 1, quanty, 0 ) ) AS breakfast,
+
+            (sum( if(i.item_id = 1, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+
+            sum( if(i.item_id = 2, quanty, 0 ) ) AS lunch,
+
+            (sum( if(i.item_id = 2, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+
+            sum( if(i.item_id = 3, quanty, 0 ) ) AS egg,
+
+            (sum( if(i.item_id = 3, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+
+            sum( if(i.item_id = 4, quanty, 0 ) ) AS nonveg,
+
+            (sum( if(i.item_id = 4, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+
+
+            sum( if(i.item_id = 6, quanty, 0 ) ) AS dinner,
+
+            (sum( if(i.item_id = 6, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+
+            sum( if(i.item_id = 7, quanty, 0 ) ) AS supper,
+
+            (sum( if(i.item_id = 7, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+
+            sum( if(i.item_id = 8, quanty, 0 ) ) AS fruits,
+
+            (sum( if(i.item_id = 8, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+
+            sum( if(i.item_id = 10, quanty, 0 ) ) AS tea,
+
+            (sum( if(i.item_id = 10, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+
+            sum( if(i.item_id = 11, quanty, 0 ) ) AS coffee,
+
+
+            (sum( if(i.item_id = 11, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+
+            sum( if(i.item_id = 12, quanty, 0 ) ) AS Biscuits,
+
+            (sum( if(i.item_id = 12, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+
+
+
+
+            sum( if(i.item_id = 13, quanty, 0 ) ) AS snacks,
+
+            (sum( if(i.item_id = 13, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+
+            sum( if(i.item_id = 14, quanty, 0 ) ) AS cooldrinks,
+
+            (sum( if(i.item_id = 14, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+
+            sum( if(i.item_id = 15, quanty, 0 ) ) AS extra_breakfast,
+
+            (sum( if(i.item_id = 15, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+
+            sum( if(i.item_id = 35, quanty, 0 ) ) AS buttermilk,
+
+            (sum( if(i.item_id = 35, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+
+            sum( if(i.item_id = 45, quanty, 0 ) ) AS mutton_briyani,
+
+            (sum( if(i.item_id = 45, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+
+            sum( if(i.item_id = 46, quanty, 0 ) ) AS chicken_briyani,
+
+            (sum( if(i.item_id = 46, quanty, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount
+
+            FROM 
+            invoice_header i
+            JOIN
+            guest_manual_entry g
+            ON
+            g.id=i.guest_id
+            join employee_master e on e.emp_code=i.emp_code
+            JOIN department d
+            ON
+            d.id=e.department
+
+            WHERE
+            (date(i.date) between ? and ?) AND
+            i.category_id=? and d.id=?
+            GROUP BY 
+            i.guest_id
+            ORDER BY
+            emp_code,d.dept_name)
+            `,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,category,department],(err,result)=>{
+                    if(err) throw err;
+                    response.send(result);
+                });
+
+            }
+
+            });
+            //Meetingrequestview
+
+            app.get('/report/meetingrequestrview',(request, response)=>{
+                var from_date='2019-04-01';
+                    var to_date='2020-12-09';
+                    var category="1";
+                    var department="all";
+                    var company="1";
+                if(department=="all")
+                {
+                    console.log("echo");
+                    pool.query(`SELECT 
+            mh.emp_code,e.emp_name,mh.no_of_persons,d.dept_name, 
+            sum( if( item_id = 1, quantity, 0 ) ) AS breakfast,
+            (sum( if( item_id = 1, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=1)) as breakfast_subsidy_amount,
+            (sum( if( item_id = 1, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=1)) as breakfast_sp_amount,
+
+            sum( if( item_id = 2, quantity, 0 ) ) AS lunch,
+            (sum( if( item_id = 2, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=2)) as lunch_subsidy_amount,
+            (sum( if( item_id = 2, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=2)) as lunch_sp_amount,
+
+            sum( if( item_id = 3, quantity, 0 ) ) AS egg,
+            (sum( if( item_id = 3, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=3)) as egg_subsidy_amount,
+            (sum( if( item_id = 3, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=3)) as egg_sp_amount,
+
+            sum( if( item_id = 4, quantity, 0 ) ) AS nonveg,
+            (sum( if( item_id = 4, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=4)) as nonveg_subsidy_amount,
+            (sum( if( item_id = 4, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=4)) as nonveg_sp_amount,
+
+
+            sum( if( item_id = 6, quantity, 0 ) ) AS dinner,
+            (sum( if( item_id = 6, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=6)) as dinner_subsidy_amount,
+            (sum( if( item_id = 6, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=6)) as dinner_sp_amount,
+
+            sum( if( item_id = 7, quantity, 0 ) ) AS supper,
+            (sum( if( item_id = 7, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=7)) as supper_subsidy_amount,
+            (sum( if( item_id = 7, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=7)) as supper_sp_amount,
+
+            sum( if( item_id = 8, quantity, 0 ) ) AS fruits,
+            (sum( if( item_id = 8, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=8)) as fruits_subsidy_amount,
+            (sum( if( item_id = 8, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=8)) as fruits_sp_amount,
+
+            sum( if( item_id = 10, quantity, 0 ) ) AS tea,
+            (sum( if( item_id = 10, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=10)) as tea_subsidy_amount,
+            (sum( if( item_id = 10, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=10)) as tea_sp_amount,
+
+            sum( if( item_id = 11, quantity, 0 ) ) AS coffee,
+            (sum( if( item_id = 11, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=11)) as coffee_subsidy_amount,
+
+            (sum( if( item_id = 11, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=11)) as coffee_sp_amount,
+
+            sum( if( item_id = 12, quantity, 0 ) ) AS Biscuits,
+            (sum( if( item_id = 12, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=12)) as biscuits_subsidy_amount,
+            (sum( if( item_id = 12, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=12)) as biscuits_sp_amount,
+
+
+
+
+            sum( if( item_id = 13, quantity, 0 ) ) AS snacks,
+            (sum( if( item_id = 13, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=13)) as snacks_subsidy_amount,
+            (sum( if( item_id = 13, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=13)) as snacks_sp_amount,
+
+            sum( if( item_id = 14, quantity, 0 ) ) AS cooldrinks,
+            (sum( if( item_id = 14, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=14)) as cooldrinks_subsidy_amount,
+            (sum( if( item_id = 14, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=14)) as cooldrinks_sp_amount,
+
+            sum( if( item_id = 15, quantity, 0 ) ) AS extra_breakfast,
+            (sum( if( item_id = 15, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=15)) as extra_breakfast_subsidy_amount,
+            (sum( if( item_id = 15, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=15)) as extra_breakfast_sp_amount,
+
+            sum( if( item_id = 35, quantity, 0 ) ) AS buttermilk,
+            (sum( if( item_id = 35, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=35)) as buttermilk_subsidy_amount,
+            (sum( if( item_id = 35, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=35)) as buttermilk_sp_amount,
+
+            sum( if( item_id = 45, quantity, 0 ) ) AS mutton_briyani,
+            (sum( if( item_id = 45, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=45)) as mutton_briyani_subsidy_amount,
+            (sum( if( item_id = 45, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=45)) as mutton_briyani_sp_amount,
+
+            sum( if( item_id = 46, quantity, 0 ) ) AS chicken_briyani,
+            (sum( if( item_id = 46, quantity, 0 ))*
+            (select employee_amount from item_master where item_id=46)) as chicken_briyani_subsidy_amount,
+            (sum( if( item_id = 46, quantity, 0 ))*
+            (select r.company_amount from item_master i join rate_master r on i.item_id=r.item_id and ? between from_date and to_date where i.item_id=46)) as chicken_briyani_sp_amount
+
+            FROM 
+            meeting_header mh
+            JOIN
+            meeting_detail md
+            ON
+            md.meeting_header_code=mh.code
+            JOIN
+            employee_master e
+            ON
+            e.emp_code=mh.emp_code
+
+            JOIN department d
+            ON
+            d.id=mh.department_id
+
+            WHERE
+            (date(mh.date) between ? and ?)  and mh.status=1
+
+            GROUP BY
+            mh.emp_code
+
+            ORDER BY
+            emp_code,d.dept_name
+            `,[from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,from_date,to_date,],(err,result)=>{
+                        if(err) throw err;
+                        response.send(result);
+                    }); 
+
+                }
+                
+            
+            });
+
+
+
+
 
 app.listen(port,()=>{ console.log(`server connected...${port}`); });
 
